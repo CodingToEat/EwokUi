@@ -40,21 +40,25 @@
         <tbody id="history"></tbody>
     </table>
 
-    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js"></script>
-    <script>
+    <script type="module">
+        // Importa los módulos necesarios de Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+        import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-database.js";
+
         // Configuración de Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyD2ypRv6gcDig_qwU_5GIT2VqpHWedpiC8",
-  	    authDomain: "my-first-app-9094c.firebaseapp.com",
-	    databaseURL: "https://my-first-app-9094c-default-rtdb.firebaseio.com",
-  	    projectId: "my-first-app-9094c",
-  	    storageBucket: "my-first-app-9094c.firebasestorage.app",
-   	    messagingSenderId: "420205149349",
-	    appId: "1:420205149349:web:f5cd9f75955a8644d1e14c"
+            authDomain: "my-first-app-9094c.firebaseapp.com",
+            databaseURL: "https://my-first-app-9094c-default-rtdb.firebaseio.com",
+            projectId: "my-first-app-9094c",
+            storageBucket: "my-first-app-9094c.firebasestorage.app",
+            messagingSenderId: "420205149349",
+            appId: "1:420205149349:web:f5cd9f75955a8644d1e14c"
         };
-        const app = firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
+
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
 
         // URL del archivo concepts.json en GitHub
         const CONCEPTS_URL = 'https://api.github.com/repos/CodingToEat/EwokUi/contents/concepts.json';
@@ -100,8 +104,8 @@
                 return;
             }
 
-            const transactionRef = database.ref('transactions').push();
-            transactionRef.set({ type, conceptId, amount });
+            const transactionRef = ref(database, 'transactions');
+            push(transactionRef, { type, conceptId, amount });
 
             amountInput.value = '';
         };
@@ -113,9 +117,10 @@
             const decodedContent = atob(data.content);
             const concepts = JSON.parse(decodedContent);
 
-            database.ref('transactions').on('value', snapshot => {
+            const transactionRef = ref(database, 'transactions');
+            onValue(transactionRef, (snapshot) => {
                 historyTable.innerHTML = '';
-                snapshot.forEach(childSnapshot => {
+                snapshot.forEach((childSnapshot) => {
                     const { type, conceptId, amount } = childSnapshot.val();
                     const conceptName = concepts[type].find(concept => concept.id === conceptId)?.name || 'Desconocido';
 
