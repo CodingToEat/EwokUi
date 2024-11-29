@@ -1,0 +1,16 @@
+{
+    "income": [
+        { "id": "1", "name": "Salario" },
+        { "id": "2", "name": "Prestamo" }
+    ],
+    "expense": [
+        { "id": "4", "name": "Hipoteca" },
+        { "id": "5", "name": "Comida" },
+        { "id": "6", "name": "Transporte" },
+        { "id": "7", "name": "Mascota" },
+        { "id": "8", "name": "Entretenimiento" },
+        { "id": "9", "name": "Servicios" },
+        { "id": "10", "name": "Deporte" },
+        { "id": "10", "name": "Pension" }
+    ]
+}

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Ingresos y Egresos</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 20px auto; }
+        input, select, button { margin: 10px 0; padding: 10px; width: 100%; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+    </style>
+</head>
+<body>
+    <h1>Registro de Ingresos y Egresos</h1>
+
+    <label for="type">Selecciona un tipo:</label>
+    <select id="type">
+        <option value="income">Ingreso</option>
+        <option value="expense">Egreso</option>
+    </select>
+
+    <label for="concept">Selecciona un concepto:</label>
+    <select id="concept"></select>
+
+    <label for="amount">Ingresa el monto:</label>
+    <input type="number" id="amount" placeholder="Monto" min="0">
+
+    <button id="saveButton">Guardar</button>
+
+    <h2>Historial</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Tipo</th>
+                <th>Concepto</th>
+                <th>Monto</th>
+            </tr>
+        </thead>
+        <tbody id="history"></tbody>
+    </table>
+
+    <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-database.js"></script>
+    <script>
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyD2ypRv6gcDig_qwU_5GIT2VqpHWedpiC8",
+  	    authDomain: "my-first-app-9094c.firebaseapp.com",
+	    databaseURL: "https://my-first-app-9094c-default-rtdb.firebaseio.com",
+  	    projectId: "my-first-app-9094c",
+  	    storageBucket: "my-first-app-9094c.firebasestorage.app",
+   	    messagingSenderId: "420205149349",
+	    appId: "1:420205149349:web:f5cd9f75955a8644d1e14c"
+        };
+        const app = firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // URL del archivo concepts.json en GitHub
+        const CONCEPTS_URL = 'https://api.github.com/repos/CodingToEat/EwokUi/contents/concepts.json';
+
+        // Elementos del DOM
+        const typeSelect = document.getElementById('type');
+        const conceptSelect = document.getElementById('concept');
+        const amountInput = document.getElementById('amount');
+        const saveButton = document.getElementById('saveButton');
+        const historyTable = document.getElementById('history');
+
+        // Cargar conceptos desde GitHub
+        const fetchConcepts = async (type) => {
+            try {
+                const response = await fetch(CONCEPTS_URL);
+                const data = await response.json();
+                const decodedContent = atob(data.content);
+                const concepts = JSON.parse(decodedContent);
+
+                // Limpiar conceptos existentes
+                conceptSelect.innerHTML = '';
+
+                // Poblar conceptos del tipo seleccionado
+                concepts[type].forEach(concept => {
+                    const option = document.createElement('option');
+                    option.value = concept.id;
+                    option.textContent = concept.name;
+                    conceptSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error al cargar conceptos:', error);
+            }
+        };
+
+        // Guardar transacción en Firebase
+        const saveTransaction = () => {
+            const type = typeSelect.value;
+            const conceptId = conceptSelect.value;
+            const amount = parseFloat(amountInput.value);
+
+            if (!amount || amount <= 0) {
+                alert("Ingresa un monto válido.");
+                return;
+            }
+
+            const transactionRef = database.ref('transactions').push();
+            transactionRef.set({ type, conceptId, amount });
+
+            amountInput.value = '';
+        };
+
+        // Mostrar historial desde Firebase
+        const loadHistory = async () => {
+            const response = await fetch(CONCEPTS_URL);
+            const data = await response.json();
+            const decodedContent = atob(data.content);
+            const concepts = JSON.parse(decodedContent);
+
+            database.ref('transactions').on('value', snapshot => {
+                historyTable.innerHTML = '';
+                snapshot.forEach(childSnapshot => {
+                    const { type, conceptId, amount } = childSnapshot.val();
+                    const conceptName = concepts[type].find(concept => concept.id === conceptId)?.name || 'Desconocido';
+
+                    const row = `<tr>
+                        <td>${type === 'income' ? 'Ingreso' : 'Egreso'}</td>
+                        <td>${conceptName}</td>
+                        <td>${amount}</td>
+                    </tr>`;
+                    historyTable.innerHTML += row;
+                });
+            });
+        };
+
+        // Inicializar
+        typeSelect.addEventListener('change', (e) => fetchConcepts(e.target.value));
+        saveButton.addEventListener('click', saveTransaction);
+
+        fetchConcepts('income');
+        loadHistory();
+    </script>
+</body>
+</html>
